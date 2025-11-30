@@ -1,3 +1,4 @@
+// src/modules/app/app.module.ts
 import { appConfig } from '@config/app/app.config';
 import { authConfig } from '@config/auth/auth.config';
 import { databaseConfig } from '@config/database/database.config';

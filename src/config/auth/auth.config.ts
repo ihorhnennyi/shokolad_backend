@@ -1,6 +1,8 @@
 export const authConfig = () => ({
   auth: {
-    jwtSecret: process.env.JWT_SECRET as string,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? '1d',
+    jwtAccessSecret: process.env.JWT_ACCESS_SECRET as string,
+    jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN ?? '15m',
+    jwtRefreshSecret: process.env.JWT_REFRESH_SECRET as string,
+    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN ?? '7d',
   },
 });
