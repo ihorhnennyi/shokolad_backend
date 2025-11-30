@@ -6,6 +6,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RefreshToken, RefreshTokenSchema } from './schemas/refresh-token.schema';
+import { RefreshTokenCleanupService } from './service/refresh-token-cleanup.service';
 import { RefreshTokenService } from './service/refresh-token.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 
@@ -34,7 +35,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     ]),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, RefreshTokenService],
+  providers: [AuthService, JwtStrategy, RefreshTokenService, RefreshTokenCleanupService],
   exports: [AuthService],
 })
 export class AuthModule {}
