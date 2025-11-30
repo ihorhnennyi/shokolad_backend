@@ -1,6 +1,6 @@
-import { appConfig } from '@config/app.config';
-import { databaseConfig } from '@config/database.config';
-import { envValidationSchema } from '@config/env.validation';
+import { appConfig } from '@/config/app/app.config';
+import { databaseConfig } from '@/config/database/database.config';
+import { envValidationSchema } from '@/config/env/env.validation';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
