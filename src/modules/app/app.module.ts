@@ -1,6 +1,7 @@
-import { appConfig } from '@/config/app/app.config';
-import { databaseConfig } from '@/config/database/database.config';
-import { envValidationSchema } from '@/config/env/env.validation';
+import { appConfig } from '@config/app/app.config';
+import { databaseConfig } from '@config/database/database.config';
+import { envValidationSchema } from '@config/env/env.validation';
+import { HealthModule } from '@modules/health/health.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -24,6 +25,7 @@ import { MongooseModule } from '@nestjs/mongoose';
         };
       },
     }),
+    HealthModule,
   ],
   controllers: [],
   providers: [],
