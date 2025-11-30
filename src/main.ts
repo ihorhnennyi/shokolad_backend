@@ -1,5 +1,6 @@
 import { HttpExceptionFilter } from '@common/filters/http-exception.filter';
 import { AppModule } from '@modules/app/app.module';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
@@ -7,7 +8,10 @@ async function bootstrap() {
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
-  await app.listen(3000);
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('app.port') ?? 3000;
+
+  await app.listen(port);
 }
 
 bootstrap();

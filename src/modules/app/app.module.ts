@@ -1,7 +1,30 @@
+import { appConfig } from '@config/app.config';
+import { databaseConfig } from '@config/database.config';
+import { envValidationSchema } from '@config/env.validation';
 import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
-  imports: [],
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [appConfig, databaseConfig],
+      validationSchema: envValidationSchema,
+    }),
+    MongooseModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const uri = configService.get<string>('database.uri');
+        const dbName = configService.get<string>('database.name');
+
+        return {
+          uri,
+          dbName,
+        };
+      },
+    }),
+  ],
   controllers: [],
   providers: [],
 })
