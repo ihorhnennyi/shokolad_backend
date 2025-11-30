@@ -1,13 +1,14 @@
+import { toUserResponseDto } from '@modules/users/mappers/user.mapper';
 import { UsersService } from '@modules/users/users.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { toUserResponseDto } from '../users/mappers/user.mapper';
+import { Request, Response } from 'express';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
+import { RefreshTokenService } from './service/refresh-token.service';
 
 @Injectable()
 export class AuthService {
@@ -15,9 +16,34 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly refreshTokenService: RefreshTokenService,
   ) {}
 
-  async login(dto: LoginDto): Promise<AuthResponseDto> {
+  private createAccessToken(payload: JwtPayload) {
+    return this.jwtService.signAsync(payload);
+  }
+
+  private createRefreshToken(payload: JwtPayload) {
+    const secret = this.configService.get<string>('auth.jwtRefreshSecret');
+    const expiresIn = this.configService.get<string>('auth.jwtRefreshExpiresIn') ?? '7d';
+
+    return this.jwtService.signAsync(payload, {
+      secret,
+      expiresIn: expiresIn as any,
+    });
+  }
+
+  private setRefreshCookie(res: Response, token: string) {
+    res.cookie('refreshToken', token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      path: '/auth',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  async login(dto: LoginDto, res: Response): Promise<AuthResponseDto> {
     const user = await this.usersService.findByEmail(dto.email);
 
     if (!user) {
@@ -36,21 +62,43 @@ export class AuthService {
       role: user.role,
     };
 
-    return this.generateTokens(payload);
+    const accessToken = await this.createAccessToken(payload);
+    const refreshToken = await this.createRefreshToken(payload);
+
+    await this.refreshTokenService.revokeAllForUser(user._id.toString());
+    await this.refreshTokenService.create(user._id.toString(), refreshToken);
+
+    this.setRefreshCookie(res, refreshToken);
+
+    return { accessToken };
   }
 
-  async refresh(dto: RefreshTokenDto): Promise<AuthResponseDto> {
-    const refreshSecret = this.configService.get<string>('auth.jwtRefreshSecret');
+  async refresh(req: Request, res: Response): Promise<AuthResponseDto> {
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh токен отсутствует');
+    }
+
+    const secret = this.configService.get<string>('auth.jwtRefreshSecret');
 
     let payload: JwtPayload;
 
     try {
-      payload = await this.jwtService.verifyAsync<JwtPayload>(dto.refreshToken, {
-        secret: refreshSecret,
+      payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken, {
+        secret,
       });
     } catch {
       throw new UnauthorizedException('Невалидный или просроченный refresh токен');
     }
+
+    const stored = await this.refreshTokenService.find(refreshToken);
+
+    if (!stored || stored.revoked) {
+      throw new UnauthorizedException('Refresh токен отозван или не найден');
+    }
+
+    await this.refreshTokenService.revoke(refreshToken);
 
     const user = await this.usersService.findById(payload.sub);
 
@@ -64,23 +112,26 @@ export class AuthService {
       role: user.role,
     };
 
-    return this.generateTokens(newPayload);
+    const accessToken = await this.createAccessToken(newPayload);
+    const newRefreshToken = await this.createRefreshToken(newPayload);
+
+    await this.refreshTokenService.create(user._id.toString(), newRefreshToken);
+
+    this.setRefreshCookie(res, newRefreshToken);
+
+    return { accessToken };
   }
 
-  private async generateTokens(payload: JwtPayload): Promise<AuthResponseDto> {
-    const refreshSecret = this.configService.get<string>('auth.jwtRefreshSecret');
-    const refreshExpiresIn = this.configService.get<string>('auth.jwtRefreshExpiresIn') ?? '7d';
+  async logout(req: Request, res: Response) {
+    const refreshToken = req.cookies?.refreshToken;
 
-    const accessToken = await this.jwtService.signAsync(payload);
-    const refreshToken = await this.jwtService.signAsync(payload, {
-      secret: refreshSecret,
-      expiresIn: refreshExpiresIn as any,
-    });
+    if (refreshToken) {
+      await this.refreshTokenService.revoke(refreshToken);
+    }
 
-    return {
-      accessToken,
-      refreshToken,
-    };
+    res.clearCookie('refreshToken', { path: '/auth' });
+
+    return { success: true };
   }
 
   async me(userId: string) {

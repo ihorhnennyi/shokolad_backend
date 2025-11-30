@@ -4,9 +4,17 @@ import { AppModule } from '@modules/app/app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(cookieParser());
+
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   app.useGlobalFilters(new HttpExceptionFilter());
 
@@ -24,6 +32,8 @@ async function bootstrap() {
   const port = configService.get<number>('app.port') ?? 3000;
 
   await app.listen(port);
+
+  console.log(`🚀 Server running on http://localhost:${port}/api/docs`);
 }
 
 bootstrap();

@@ -1,9 +1,19 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { AuthResponseDto } from './dto/auth-response.dto';
 import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth')
@@ -15,16 +25,18 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Логин пользователя' })
   @ApiOkResponse({ type: AuthResponseDto })
-  async login(@Body() dto: LoginDto): Promise<AuthResponseDto> {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto, @Res() res: Response) {
+    const result = await this.authService.login(dto, res);
+    return res.json(result);
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Обновление access токена по refresh токену' })
   @ApiOkResponse({ type: AuthResponseDto })
-  async refresh(@Body() dto: RefreshTokenDto): Promise<AuthResponseDto> {
-    return this.authService.refresh(dto);
+  async refresh(@Req() req: Request, @Res() res: Response) {
+    const result = await this.authService.refresh(req, res);
+    return res.json(result);
   }
 
   @Get('me')
@@ -36,9 +48,10 @@ export class AuthController {
   }
 
   @Post('logout')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Logout user' })
-  async logout() {
-    return { success: true };
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const result = await this.authService.logout(req, res);
+    return res.json(result);
   }
 }
