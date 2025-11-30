@@ -1,17 +1,19 @@
 import { appConfig } from '@config/app/app.config';
+import { authConfig } from '@config/auth/auth.config';
 import { databaseConfig } from '@config/database/database.config';
 import { envValidationSchema } from '@config/env/env.validation';
+import { AuthModule } from '@modules/auth/auth.module';
 import { HealthModule } from '@modules/health/health.module';
+import { UsersModule } from '@modules/users/users.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [appConfig, databaseConfig],
+      load: [appConfig, databaseConfig, authConfig],
       validationSchema: envValidationSchema,
     }),
     MongooseModule.forRootAsync({
@@ -27,9 +29,8 @@ import { UsersModule } from '../users/users.module';
       },
     }),
     HealthModule,
+    AuthModule,
     UsersModule,
   ],
-  controllers: [],
-  providers: [],
 })
 export class AppModule {}

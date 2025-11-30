@@ -1,20 +1,21 @@
 {
   "name": "shokolad_backend",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
-    "start": "node dist/src/main.js",
-    "start:dev": "nest start --watch"
+    "start": "node dist/main.js",
+    "start:prod": "node dist/main.js",
+    "start:dev": "nodemon --watch src --ext ts --exec \"node -r ts-node/register -r tsconfig-paths/register src/main.ts\""
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/jwt": "^11.0.1",
     "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.3",
     "bcrypt": "^6.0.0",
@@ -22,6 +23,7 @@
     "class-validator": "^0.14.3",
     "joi": "^18.0.2",
     "mongoose": "^8.20.1",
+    "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1"
@@ -31,6 +33,9 @@
     "@nestjs/schematics": "^11.0.0",
     "@types/bcrypt": "^6.0.0",
     "@types/node": "^22.10.7",
+    "nodemon": "^3.1.11",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.7.3"
   }
 }

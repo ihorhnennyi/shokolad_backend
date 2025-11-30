@@ -15,6 +15,12 @@ export class User {
 
   @Prop({ enum: UserRole, default: UserRole.MANAGER })
   role: UserRole;
+
+  @Prop()
+  createdAt: Date;
+
+  @Prop()
+  updatedAt: Date;
 }
 
 export type UserDocument = User & Document;
