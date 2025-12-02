@@ -5,6 +5,9 @@ export class NewsResponseDto {
   @ApiProperty({ example: '665f3a5a0f1b2c3d4e5f6a7b' })
   id: string;
 
+  @ApiProperty({ example: 'ichm-otrymav-kategoriyu-a' })
+  slug: string;
+
   @ApiProperty({ example: 'ІЧМ отримав категорію А' })
   title: string;
 

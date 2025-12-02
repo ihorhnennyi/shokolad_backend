@@ -1,3 +1,4 @@
+import { slugify } from '@/common/utils/slugify.util';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { promises as fs } from 'fs';
@@ -30,6 +31,7 @@ export class NewsService {
   private mapToResponse(news: NewsDocument): NewsResponseDto {
     return {
       id: news._id.toString(),
+      slug: news.slug,
       title: news.title,
       description: news.description,
       blocks: news.blocks as any,
@@ -39,9 +41,39 @@ export class NewsService {
     };
   }
 
+  private slugify(value: string): string {
+    return value
+      .toLowerCase()
+      .trim()
+      .replace(/[^\p{L}\p{N}]+/gu, '-') // всё, что не буква/цифра — в "-"
+      .replace(/^-+|-+$/g, ''); // убираем "-" по краям
+  }
+
+  private async generateUniqueSlug(title: string, currentId?: string): Promise<string> {
+    const base = slugify(title) || 'news';
+    let slug = base;
+    let counter = 1;
+
+    while (true) {
+      const exists = await this.newsModel.exists({
+        slug,
+        ...(currentId ? { _id: { $ne: currentId } } : {}),
+      });
+
+      if (!exists) {
+        return slug;
+      }
+
+      slug = `${base}-${counter++}`;
+    }
+  }
+
   async create(dto: CreateNewsDto, files: Express.Multer.File[] = []): Promise<NewsResponseDto> {
+    const slug = await this.generateUniqueSlug(dto.title);
+
     const created = new this.newsModel({
       title: dto.title,
+      slug,
       description: dto.description,
       blocks: dto.blocks ?? [],
     });
@@ -93,8 +125,9 @@ export class NewsService {
       throw new NotFoundException('Новина не знайдена');
     }
 
-    if (dto.title !== undefined) {
+    if (dto.title !== undefined && dto.title !== news.title) {
       news.title = dto.title;
+      news.slug = await this.generateUniqueSlug(dto.title, news._id.toString());
     }
 
     if (dto.description !== undefined) {
