@@ -3,6 +3,8 @@ import {
   Controller,
   HttpCode,
   HttpStatus,
+  Param,
+  Patch,
   Post,
   UploadedFiles,
   UseGuards,
@@ -14,7 +16,9 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
+  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 import { memoryStorage } from 'multer';
@@ -25,6 +29,7 @@ import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { UserRole } from '@modules/users/enums/user-role.enum';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { NewsResponseDto } from './dto/news-response.dto';
+import { UpdateNewsDto } from './dto/update-news.dto';
 import { NewsService } from './news.service';
 
 @ApiTags('News')
@@ -67,5 +72,47 @@ export class NewsController {
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<NewsResponseDto> {
     return this.newsService.create(dto, files);
+  }
+
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Оновлення новини (тільки адмін, з файлами)' })
+  @ApiOkResponse({ type: NewsResponseDto })
+  @ApiParam({
+    name: 'id',
+    description: 'ID новини',
+    example: '665f3a5a0f1b2c3d4e5f6a7b',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        title: { type: 'string', example: 'Оновлений заголовок новини' },
+        description: {
+          type: 'string',
+          example: 'Оновлений короткий опис новини.',
+        },
+        files: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FilesInterceptor('files', 10, {
+      storage: memoryStorage(),
+    }),
+  )
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateNewsDto,
+    @UploadedFiles() files: Express.Multer.File[],
+  ): Promise<NewsResponseDto> {
+    return this.newsService.update(id, files?.length ? dto : dto, files);
   }
 }
