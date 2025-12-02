@@ -36,6 +36,7 @@
     "@nestjs/schematics": "^11.0.0",
     "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
+    "@types/multer": "^2.0.0",
     "@types/node": "^22.10.7",
     "nodemon": "^3.1.11",
     "ts-node": "^10.9.2",
