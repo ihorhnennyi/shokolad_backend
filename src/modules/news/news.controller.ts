@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Param,
   Patch,
   Post,
+  Query,
   UploadedFiles,
   UseGuards,
   UseInterceptors,
@@ -28,7 +30,9 @@ import { RolesGuard } from '@common/guards/roles.guard';
 import { JwtAuthGuard } from '@modules/auth/guards/jwt-auth.guard';
 import { UserRole } from '@modules/users/enums/user-role.enum';
 import { CreateNewsDto } from './dto/create-news.dto';
+import { GetNewsQueryDto } from './dto/get-news-query.dto';
 import { NewsResponseDto } from './dto/news-response.dto';
+import { PaginatedNewsResponseDto } from './dto/paginated-news-response.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 import { NewsService } from './news.service';
 
@@ -113,6 +117,16 @@ export class NewsController {
     @Body() dto: UpdateNewsDto,
     @UploadedFiles() files: Express.Multer.File[],
   ): Promise<NewsResponseDto> {
-    return this.newsService.update(id, files?.length ? dto : dto, files);
+    return this.newsService.update(id, dto, files);
+  }
+
+  @Get()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Отримати список новин (публічний, з пагінацією та пошуком)',
+  })
+  @ApiOkResponse({ type: PaginatedNewsResponseDto })
+  async findAll(@Query() query: GetNewsQueryDto): Promise<PaginatedNewsResponseDto> {
+    return this.newsService.findAll(query);
   }
 }

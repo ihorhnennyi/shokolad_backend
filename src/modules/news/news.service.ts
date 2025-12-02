@@ -4,7 +4,9 @@ import { promises as fs } from 'fs';
 import { Model } from 'mongoose';
 import * as path from 'path';
 import { CreateNewsDto } from './dto/create-news.dto';
+import { GetNewsQueryDto } from './dto/get-news-query.dto';
 import { NewsResponseDto } from './dto/news-response.dto';
+import { PaginatedNewsResponseDto } from './dto/paginated-news-response.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 import { NewsBlockType } from './enums/news-block-type.enum';
 import { NewsBlock } from './schemas/news-block.schema';
@@ -136,5 +138,37 @@ export class NewsService {
     const saved = await news.save();
 
     return this.mapToResponse(saved);
+  }
+
+  async findAll(query: GetNewsQueryDto): Promise<PaginatedNewsResponseDto> {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const search = query.search?.trim();
+
+    const filter: Record<string, unknown> = {};
+
+    if (search) {
+      filter.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      this.newsModel
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .exec(),
+      this.newsModel.countDocuments(filter),
+    ]);
+
+    return {
+      items: items.map((news) => this.mapToResponse(news)),
+      page,
+      limit,
+      total,
+    };
   }
 }
