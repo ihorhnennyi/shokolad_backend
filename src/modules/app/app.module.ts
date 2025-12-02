@@ -10,6 +10,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
+import { CategoriesModule } from '../categories/categories.module';
 import { NewsModule } from '../news/news.module';
 
 @Module({
@@ -36,6 +37,7 @@ import { NewsModule } from '../news/news.module';
     AuthModule,
     UsersModule,
     NewsModule,
+    CategoriesModule,
   ],
 })
 export class AppModule {}
