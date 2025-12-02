@@ -18,6 +18,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiParam,
@@ -128,5 +129,23 @@ export class NewsController {
   @ApiOkResponse({ type: PaginatedNewsResponseDto })
   async findAll(@Query() query: GetNewsQueryDto): Promise<PaginatedNewsResponseDto> {
     return this.newsService.findAll(query);
+  }
+
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Отримати одну новину за ID (публічний)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID новини',
+    example: '665f3a5a0f1b2c3d4e5f6a7b',
+  })
+  @ApiOkResponse({ type: NewsResponseDto })
+  @ApiNotFoundResponse({
+    description: 'Новина не знайдена',
+  })
+  async findOne(@Param('id') id: string): Promise<NewsResponseDto> {
+    return this.newsService.findOne(id);
   }
 }

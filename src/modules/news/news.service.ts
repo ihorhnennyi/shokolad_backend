@@ -171,4 +171,14 @@ export class NewsService {
       total,
     };
   }
+
+  async findOne(id: string): Promise<NewsResponseDto> {
+    const news = await this.newsModel.findById(id);
+
+    if (!news) {
+      throw new NotFoundException('Новина не знайдена');
+    }
+
+    return this.mapToResponse(news);
+  }
 }
