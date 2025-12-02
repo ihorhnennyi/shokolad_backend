@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -18,6 +19,7 @@ import {
   ApiBody,
   ApiConsumes,
   ApiCreatedResponse,
+  ApiNoContentResponse,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -147,5 +149,28 @@ export class NewsController {
   })
   async findOne(@Param('id') id: string): Promise<NewsResponseDto> {
     return this.newsService.findOne(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Видалити новину з файлами (тільки адмін)',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID новини',
+    example: '665f3a5a0f1b2c3d4e5f6a7b',
+  })
+  @ApiNoContentResponse({
+    description: 'Новина успішно видалена',
+  })
+  @ApiNotFoundResponse({
+    description: 'Новина не знайдена',
+  })
+  async remove(@Param('id') id: string): Promise<void> {
+    await this.newsService.remove(id);
   }
 }

@@ -181,4 +181,19 @@ export class NewsService {
 
     return this.mapToResponse(news);
   }
+
+  async remove(id: string): Promise<void> {
+    const news = await this.newsModel.findById(id);
+
+    if (!news) {
+      throw new NotFoundException('Новина не знайдена');
+    }
+
+    const uploadsRoot = this.getNewsUploadsRoot();
+    const folderPath = news.folderPath || path.join(uploadsRoot, news._id.toString());
+
+    await this.newsModel.deleteOne({ _id: id });
+
+    await fs.rm(folderPath, { recursive: true, force: true });
+  }
 }
