@@ -16,13 +16,24 @@ export class RefreshTokenCleanupService {
   @Cron(CronExpression.EVERY_HOUR)
   async handleCleanup() {
     const now = new Date();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-    const result = await this.tokenModel.deleteMany({
+    const expiredResult = await this.tokenModel.deleteMany({
       expiresAt: { $lte: now },
     });
 
-    if (result.deletedCount > 0) {
-      this.logger.log(`🧹 Очистка refresh-токенов: удалено ${result.deletedCount}`);
+    const revokedResult = await this.tokenModel.deleteMany({
+      revoked: true,
+      updatedAt: { $lte: sevenDaysAgo },
+    });
+
+    const deletedExpired = expiredResult.deletedCount ?? 0;
+    const deletedRevoked = revokedResult.deletedCount ?? 0;
+
+    if (deletedExpired || deletedRevoked) {
+      this.logger.log(
+        `🧹 Refresh tokens cleanup: expired=${deletedExpired}, revoked=${deletedRevoked}`,
+      );
     }
   }
 }
